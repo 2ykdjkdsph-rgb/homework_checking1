@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>提交作业</title>
+  <style>
+    :root{--panel:rgba(255,251,245,.95);--line:rgba(23,34,40,.12);--ink:#1d2a2e;--muted:#647377;--accent:#0b6976;--accent-deep:#064b55;--ok:#2f7d5c;--warn:#ab4132;--shadow:0 18px 60px rgba(46,34,21,.12)}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;color:var(--ink);font-family:"Source Han Sans SC","Noto Sans SC","Segoe UI",sans-serif;background:radial-gradient(circle at top left,rgba(178,96,43,.16),transparent 28%),radial-gradient(circle at top right,rgba(11,105,118,.14),transparent 28%),linear-gradient(180deg,#f7f2eb 0%,#efe6d8 100%)}
+    .wrap{width:min(940px,calc(100% - 32px));margin:0 auto;padding:28px 0 40px}.panel{background:var(--panel);border:1px solid rgba(255,255,255,.72);border-radius:28px;box-shadow:var(--shadow);padding:28px}.eyebrow{margin:0 0 10px;font-size:13px;letter-spacing:.16em;color:var(--accent);text-transform:uppercase}h1,p{margin:0}h1{font-size:clamp(28px,4vw,42px);line-height:1.08}.intro{margin-top:14px;color:var(--muted);line-height:1.8;font-size:15px}
+    .actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:18px}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border-radius:999px;border:1px solid rgba(23,34,40,.12);background:rgba(255,255,255,.82);color:var(--ink);text-decoration:none;font-weight:700;cursor:pointer}.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-deep));color:#fff;border-color:transparent}
+    form{display:grid;gap:16px;margin-top:24px}.field{display:grid;gap:8px}label{font-weight:700;font-size:14px}input[type="text"],input[type="file"],select,textarea{width:100%;border-radius:16px;border:1px solid rgba(23,34,40,.14);background:rgba(255,255,255,.84);padding:12px 14px;font-size:14px;color:var(--ink)}textarea{min-height:120px;resize:vertical;line-height:1.7}.tip{color:var(--muted);font-size:13px;line-height:1.7}
+    .alert{margin-top:20px;border-radius:18px;padding:16px 18px;line-height:1.8;font-size:14px;display:none}.alert.ok{display:block;background:rgba(47,125,92,.1);border:1px solid rgba(47,125,92,.18);color:var(--ok)}.alert.warn{display:block;background:rgba(171,65,50,.08);border:1px solid rgba(171,65,50,.16);color:var(--warn)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <div class="eyebrow">Submission Portal</div>
+      <h1>提交作业</h1>
+      <p class="intro">课程将只展示你已经纳入的课程；若从“我的作业 - 去提交作业”进入，页面会自动带入当前课程和作业。当前页面仍为静态提交流程，提交后会在浏览器本地记录一次提交信息，并跳转到批改查询页。</p>
+      <div class="actions">
+        <a class="btn" href="./student-index.html">返回学生首页</a>
+        <a class="btn" href="./学生端_作业批改查询.html">返回批改查询</a>
+      </div>
+      <form id="submitForm">
+        <div class="field">
+          <label for="courseSelect">课程名称</label>
+          <select id="courseSelect"></select>
+        </div>
+        <div class="field">
+          <label for="assignmentSelect">作业名称</label>
+          <select id="assignmentSelect"></select>
+          <div class="tip">若从作业入口跳转，当前作业会自动选中；否则可在当前课程下手动选择。</div>
+        </div>
+        <div class="field">
+          <label for="studentName">学生姓名</label>
+          <input id="studentName" type="text" placeholder="请输入姓名">
+        </div>
+        <div class="field">
+          <label for="studentId">学号</label>
+          <input id="studentId" type="text" placeholder="请输入学号">
+        </div>
+        <div class="field">
+          <label for="homeworkFiles">上传作业文件</label>
+          <input id="homeworkFiles" type="file" multiple accept=".pdf,.doc,.docx,.ipynb,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+          <div class="tip">支持 `pdf / doc / docx / ipynb`。可一次选择多个文件，用于正文、附录和代码附件。</div>
+        </div>
+        <div class="field">
+          <label for="remark">备注说明</label>
+          <textarea id="remark" placeholder="可填写补充说明，例如重提版本、文件结构说明、补交原因等。"></textarea>
+        </div>
+        <div class="actions">
+          <button class="btn primary" type="submit">提交</button>
+          <button class="btn" type="button" id="clearBtn">清空</button>
+        </div>
+      </form>
+      <div id="alertBox" class="alert"></div>
+    </div>
+  </div>
+
+  <script src="./auth.js"></script>
+  <script src="./teacher-system-store.js"></script>
+  <script src="./teacher-assignments.js"></script>
+  <script>
+    const user = window.AuthStore.requireRole("student");
+    const params = new URLSearchParams(window.location.search);
+    const submitForm = document.getElementById("submitForm");
+    const alertBox = document.getElementById("alertBox");
+    const clearBtn = document.getElementById("clearBtn");
+    const fileInput = document.getElementById("homeworkFiles");
+    const studentNameInput = document.getElementById("studentName");
+    const studentIdInput = document.getElementById("studentId");
+    const courseSelect = document.getElementById("courseSelect");
+    const assignmentSelect = document.getElementById("assignmentSelect");
+    const allowed = [".pdf", ".doc", ".docx", ".ipynb"];
+
+    function normalize(text) {
+      return String(text || "").replace(/\s+/g, "").trim();
+    }
+
+    function getStudentCourses() {
+      return window.TeacherSystemStore.listLevels().flatMap(level =>
+        window.TeacherSystemStore.listCourses(level.id)
+          .filter(course =>
+            window.TeacherSystemStore.listStudents(course.id).some(student =>
+              student.id === user.studentId || normalize(student.name) === normalize(user.name)
+            )
+          )
+          .map(course => ({ ...course, levelId: level.id, levelName: level.name }))
+      );
+    }
+
+    function getAssignmentsByCourse(courseId) {
+      return window.teacherAssignmentStore.listAssignments().filter(item => item.courseId === courseId);
+    }
+
+    function showAlert(type, message) {
+      alertBox.className = `alert ${type}`;
+      alertBox.innerHTML = message;
+    }
+
+    function renderCourseOptions() {
+      const courses = getStudentCourses();
+      courseSelect.innerHTML = courses.length
+        ? courses.map(course => `<option value="${course.id}">${course.name}</option>`).join("")
+        : `<option value="">当前暂无可选课程</option>`;
+
+      const presetCourseName = params.get("courseName");
+      const presetCourseId = params.get("courseId");
+      if (presetCourseId && Array.from(courseSelect.options).some(option => option.value === presetCourseId)) {
+        courseSelect.value = presetCourseId;
+      } else if (presetCourseName) {
+        const matched = courses.find(course => course.name === presetCourseName);
+        if (matched) courseSelect.value = matched.id;
+      }
+      renderAssignmentOptions();
+    }
+
+    function renderAssignmentOptions() {
+      const assignmentId = params.get("assignmentId");
+      const assignmentName = params.get("assignmentName");
+      const assignments = getAssignmentsByCourse(courseSelect.value);
+      assignmentSelect.innerHTML = assignments.length
+        ? assignments.map(item => `<option value="${item.id}">${item.name}</option>`).join("")
+        : `<option value="">当前课程下暂无可提交作业</option>`;
+
+      if (assignmentId && Array.from(assignmentSelect.options).some(option => option.value === assignmentId)) {
+        assignmentSelect.value = assignmentId;
+      } else if (assignmentName) {
+        const matched = assignments.find(item => item.name === assignmentName);
+        if (matched) assignmentSelect.value = matched.id;
+      }
+    }
+
+    function resetForm() {
+      submitForm.reset();
+      studentNameInput.value = user.name || "";
+      studentIdInput.value = user.studentId || "";
+      renderCourseOptions();
+      alertBox.className = "alert";
+      alertBox.textContent = "";
+    }
+
+    courseSelect.addEventListener("change", renderAssignmentOptions);
+
+    studentNameInput.value = user.name || "";
+    studentIdInput.value = user.studentId || "";
+    renderCourseOptions();
+
+    submitForm.addEventListener("submit", event => {
+      event.preventDefault();
+
+      const assignment = window.teacherAssignmentStore.getAssignment(assignmentSelect.value);
+      const assignmentId = assignment?.id || "";
+      const assignmentName = assignment?.name || "";
+      const name = studentNameInput.value.trim();
+      const studentId = studentIdInput.value.trim();
+      const courseName = courseSelect.options[courseSelect.selectedIndex]?.text || "";
+      const courseId = courseSelect.value;
+      const remark = document.getElementById("remark").value.trim();
+      const files = Array.from(fileInput.files || []);
+
+      if (!courseId || !assignmentId || !name || !studentId) {
+        showAlert("warn", "请先完整选择课程、作业，并填写学生姓名与学号。");
+        return;
+      }
+
+      if (!files.length) {
+        showAlert("warn", "请至少选择一个作业文件后再提交。");
+        return;
+      }
+
+      const invalid = files.find(file => {
+        const lower = file.name.toLowerCase();
+        return !allowed.some(ext => lower.endsWith(ext));
+      });
+      if (invalid) {
+        showAlert("warn", `文件 ${invalid.name} 不在允许范围内。当前仅支持：${allowed.join(" / ")}`);
+        return;
+      }
+
+      const record = {
+        assignmentId,
+        assignmentName,
+        courseId,
+        courseName,
+        name,
+        studentId,
+        remark,
+        files: files.map(file => ({ name: file.name, size: file.size })),
+        submittedAt: new Date().toLocaleString()
+      };
+
+      const records = JSON.parse(localStorage.getItem("homework_submissions") || "[]");
+      records.push(record);
+      localStorage.setItem("homework_submissions", JSON.stringify(records));
+
+      showAlert(
+        "ok",
+        `已记录一次静态提交。<br>课程：${courseName}<br>作业：${assignmentName}<br>学生：${name}（${studentId}）<br>文件：${files.map(file => file.name).join(" / ")}<br>正在跳转到作业批改查询页面。`
+      );
+
+      setTimeout(() => {
+        window.location.href = `./学生端_作业批改查询.html?name=${encodeURIComponent(name)}&course=${encodeURIComponent(courseName)}&assignmentId=${encodeURIComponent(assignmentId)}`;
+      }, 800);
+    });
+
+    clearBtn.addEventListener("click", resetForm);
+  </script>
+</body>
+</html>

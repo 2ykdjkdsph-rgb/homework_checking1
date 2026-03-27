@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教师端首页</title>
+  <style>
+    :root {
+      --panel: rgba(255, 251, 245, 0.94);
+      --line: rgba(24, 35, 42, 0.1);
+      --ink: #1d2a2f;
+      --muted: #637276;
+      --accent: #0c6876;
+      --accent-deep: #074c56;
+      --warm: #b3652d;
+      --good: #2f7d5c;
+      --mid: #d08b1f;
+      --shadow: 0 18px 60px rgba(46, 34, 21, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: "Source Han Sans SC", "Noto Sans SC", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(179, 101, 45, 0.16), transparent 28%),
+        radial-gradient(circle at top right, rgba(12, 104, 118, 0.14), transparent 30%),
+        linear-gradient(180deg, #f8f2ea 0%, #efe5d7 100%);
+    }
+
+    a { color: inherit; }
+    h1, h2, h3, h4, p { margin: 0; }
+
+    .wrap {
+      width: min(1400px, calc(100% - 36px));
+      margin: 0 auto;
+      padding: 28px 0 42px;
+    }
+
+    .hero,
+    .section-card,
+    .sidebar-card,
+    .content-card,
+    .user-card,
+    .floating-card,
+    .config-floating-card {
+      background: var(--panel);
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero { padding: 30px; }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      font-size: 13px;
+      letter-spacing: 0.16em;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: clamp(30px, 4vw, 44px);
+      line-height: 1.08;
+    }
+
+    .hero p {
+      margin-top: 14px;
+      max-width: 920px;
+      color: var(--muted);
+      line-height: 1.8;
+      font-size: 15px;
+    }
+
+    .hero-actions,
+    .profile-actions,
+    .inline-actions,
+    .toolbar-block {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .hero-actions { margin-top: 18px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(24, 35, 42, 0.1);
+      background: rgba(255, 255, 255, 0.82);
+      text-decoration: none;
+      color: var(--ink);
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.18s ease, border-color 0.18s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); border-color: rgba(24, 35, 42, 0.16); }
+    .btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent-deep)); color: #fff; border-color: transparent; }
+    .btn.small { min-height: 34px; padding: 0 12px; font-size: 12px; }
+
+    .user-shell { position: relative; min-width: 296px; }
+
+    .user-card {
+      width: 100%;
+      padding: 14px 16px;
+      position: relative;
+      overflow: hidden;
+      border-color: rgba(24, 35, 42, 0.12);
+      background: linear-gradient(180deg, rgba(255, 252, 247, 0.96), rgba(252, 248, 242, 0.98));
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-align: left;
+      cursor: pointer;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.9),
+        inset 0 0 0 1px rgba(255,255,255,0.68),
+        0 10px 26px rgba(46, 34, 21, 0.08);
+    }
+
+    .avatar {
+      width: 54px;
+      height: 54px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--accent), var(--warm));
+      color: #fff;
+      font-weight: 800;
+      font-size: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      box-shadow: 0 10px 22px rgba(12, 104, 118, 0.18);
+    }
+
+    .user-label {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 9px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.72);
+      border: 1px solid rgba(24, 35, 42, 0.1);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #607074;
+      margin-bottom: 6px;
+    }
+    .user-name { font-size: 18px; font-weight: 800; }
+    .user-value { margin-top: 3px; color: #5a6b70; font-size: 13px; }
+
+    .popover {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 12px);
+      width: 320px;
+      z-index: 20;
+      border-radius: 24px;
+      border: 1px solid rgba(24, 35, 42, 0.1);
+      background: #f3eee6;
+      box-shadow: 0 18px 50px rgba(46, 34, 21, 0.16);
+      padding: 18px;
+    }
+
+    .popover.show { display: block; }
+
+    .popover-head {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 14px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(24, 35, 42, 0.08);
+    }
+
+    .popover .name { font-weight: 800; font-size: 18px; margin-bottom: 4px; }
+    .popover .meta { color: var(--muted); font-size: 13px; line-height: 1.7; white-space: pre-line; }
+
+    .page-layout {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: 0 minmax(0, 1fr);
+      align-items: start;
+    }
+
+    #levelNavMount {
+      position: sticky;
+      top: 14px;
+      align-self: start;
+      width: 112px;
+      margin-left: -136px;
+      z-index: 4;
+    }
+
+    .content-stack {
+      display: grid;
+      gap: 24px;
+    }
+
+    .level-nav {
+      width: 112px;
+      padding: 14px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(24, 35, 42, 0.08);
+      background: rgba(255,255,255,0.84);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.72);
+    }
+
+    .level-nav-title {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .level-nav-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .level-nav-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 10px;
+      border-radius: 14px;
+      background: rgba(247, 243, 236, 0.92);
+      border: 1px solid rgba(24, 35, 42, 0.06);
+      text-decoration: none;
+      font-weight: 700;
+      color: var(--ink);
+      text-align: center;
+    }
+
+    .section-card {
+      padding: 24px;
+      scroll-margin-top: 20px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .section-desc {
+      margin-top: 10px;
+      color: var(--muted);
+      line-height: 1.75;
+      font-size: 14px;
+      max-width: 860px;
+    }
+
+    .level-layout {
+      display: grid;
+      grid-template-columns: 272px minmax(0, 1fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .sidebar-card,
+    .content-card { padding: 22px; }
+
+    .sidebar-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      position: relative;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.75;
+    }
+
+    .course-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .course-item {
+      border-radius: 20px;
+      border: 1px solid rgba(24, 35, 42, 0.08);
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.78);
+      cursor: pointer;
+      transition: transform 0.18s ease, border-color 0.18s ease;
+    }
+
+    .course-item:hover { transform: translateY(-1px); border-color: rgba(12, 104, 118, 0.28); }
+    .course-item.active { border-color: rgba(12, 104, 118, 0.34); box-shadow: inset 0 0 0 1px rgba(12, 104, 118, 0.14); }
+    .course-name { font-weight: 800; margin-bottom: 6px; }
+    .course-meta { color: var(--muted); font-size: 13px; line-height: 1.65; }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .segment {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(24, 35, 42, 0.08);
+      background: rgba(247, 243, 236, 0.92);
+    }
+
+    .segment button {
+      min-height: 40px;
+      min-width: 108px;
+      padding: 0 18px;
+      border-radius: 999px;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .segment button.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+      color: #fff;
+      box-shadow: 0 10px 22px rgba(12, 104, 118, 0.18);
+    }
+
+    .floating-card {
+      position: absolute;
+      left: calc(100% + 12px);
+      top: 50%;
+      transform: translateY(-50%);
+      width: 340px;
+      padding: 18px;
+      display: none;
+      z-index: 12;
+      background: #f3eee6;
+    }
+
+    .floating-card.show { display: block; }
+
+    .config-popover-anchor {
+      position: relative;
+    }
+
+    .config-floating-card {
+      position: absolute;
+      left: calc(100% + 12px);
+      top: 50%;
+      transform: translateY(-50%);
+      width: 360px;
+      padding: 18px;
+      display: none;
+      z-index: 14;
+      background: #f3eee6;
+    }
+
+    .config-floating-card.show { display: block; }
+
+    .workspace-header {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 20px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid rgba(24, 35, 42, 0.08);
+    }
+
+    .workspace-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .mode-tabs {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px;
+      border-radius: 18px;
+      background: rgba(245, 240, 232, 0.96);
+      border: 1px solid rgba(24, 35, 42, 0.06);
+      width: fit-content;
+    }
+
+    .mode-tabs button {
+      min-height: 44px;
+      min-width: 126px;
+      padding: 0 18px;
+      border-radius: 14px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+
+    .mode-tabs button.active {
+      background: rgba(255, 255, 255, 0.96);
+      color: var(--ink);
+      border-color: rgba(24, 35, 42, 0.08);
+      box-shadow: 0 10px 22px rgba(38, 32, 26, 0.08);
+    }
+
+    .sub-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.76);
+      border: 1px solid rgba(24, 35, 42, 0.06);
+    }
+
+    .sub-toolbar-title {
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-right: 6px;
+    }
+
+    .segment.compact {
+      padding: 4px;
+      background: rgba(247, 243, 236, 0.88);
+    }
+
+    .segment.compact button {
+      min-height: 36px;
+      min-width: 94px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .submission-figure {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+    }
+
+    .missing-indicator {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      cursor: default;
+      font-weight: 800;
+    }
+
+    .missing-indicator.good { color: var(--good); }
+    .missing-indicator.bad { color: #b23b31; }
+
+    .missing-card {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: calc(100% + 10px);
+      transform: translateY(-50%);
+      min-width: 220px;
+      max-width: 280px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(24, 35, 42, 0.1);
+      background: rgba(255, 255, 255, 1);
+      box-shadow: 0 18px 40px rgba(46, 34, 21, 0.14);
+      z-index: 9;
+      color: var(--ink);
+    }
+
+    .missing-indicator.bad:hover .missing-card {
+      display: block;
+    }
+
+    tbody tr:last-child .missing-card {
+      top: calc(50% - 28px);
+    }
+
+    .missing-card-title {
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .missing-card-list {
+      margin: 0;
+      padding-left: 16px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .field label { font-weight: 700; font-size: 14px; }
+
+    .field input,
+    .field textarea {
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid rgba(24, 35, 42, 0.14);
+      background: rgba(255, 255, 255, 0.84);
+      padding: 12px 14px;
+      color: var(--ink);
+      font-size: 14px;
+    }
+
+    .field textarea {
+      min-height: 140px;
+      resize: vertical;
+      line-height: 1.7;
+    }
+
+    .config-shell {
+      display: none;
+      margin-bottom: 18px;
+    }
+
+    .config-shell.show { display: block; }
+
+    .config-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .config-card {
+      border-radius: 22px;
+      border: 1px solid rgba(24, 35, 42, 0.08);
+      background: linear-gradient(180deg, rgba(255,255,255,0.84), rgba(255, 251, 246, 0.98));
+      padding: 18px;
+      display: none;
+    }
+
+    .config-card.show { display: block; }
+
+    .students-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .student-card {
+      border-radius: 22px;
+      border: 1px solid rgba(24, 35, 42, 0.08);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(255, 251, 246, 0.96));
+      padding: 18px;
+    }
+
+    .student-name-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 20px;
+    }
+
+    .student-meta {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.75;
+    }
+
+    .student-list {
+      width: 100%;
+      border-collapse: collapse;
+      border-radius: 22px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.76);
+      table-layout: fixed;
+    }
+
+    .assign-table-wrap {
+      overflow-x: auto;
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.76);
+    }
+
+    .assign-table {
+      width: 100%;
+      min-width: 880px;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: transparent;
+    }
+
+    .assign-table col:nth-child(1) { width: 24%; }
+    .assign-table col:nth-child(2) { width: 8%; }
+    .assign-table col:nth-child(3) { width: 10%; }
+    .assign-table col:nth-child(4) { width: 8%; }
+    .assign-table col:nth-child(5) { width: 13%; }
+    .assign-table col:nth-child(6) { width: 7%; }
+    .assign-table col:nth-child(7) { width: 30%; }
+
+    .student-list th,
+    .student-list td,
+    .assign-table th,
+    .assign-table td {
+      padding: 10px 8px;
+      text-align: left;
+      border-bottom: 1px solid rgba(24, 35, 42, 0.08);
+      vertical-align: middle;
+      font-size: 13px;
+      word-break: break-word;
+    }
+
+    .assign-table td:last-child { white-space: nowrap; }
+
+    .assign-table th:first-child,
+    .assign-table td:first-child {
+      padding-right: 1px;
+    }
+
+    .assign-table th:nth-child(2),
+    .assign-table td:nth-child(2) {
+      padding-left: 0;
+    }
+
+    .assign-table th:nth-child(3),
+    .assign-table td:nth-child(3),
+    .assign-table th:nth-child(4),
+    .assign-table td:nth-child(4) {
+      padding-left: 3px;
+      padding-right: 16px;
+      text-align: center;
+    }
+
+    .assign-table th:nth-child(6),
+    .assign-table td:nth-child(6),
+    .assign-table th:nth-child(7),
+    .assign-table td:nth-child(7) {
+      padding-left: 6px;
+      padding-right: 6px;
+    }
+
+    .assign-table .inline-actions {
+      flex-wrap: nowrap;
+      gap: 6px;
+    }
+
+    .assign-table .inline-actions .btn {
+      white-space: nowrap;
+      min-height: 32px;
+      padding: 0 10px;
+    }
+
+    .student-list th,
+    .assign-table th {
+      background: rgba(255, 255, 255, 0.82);
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .badge.good { background: var(--good); }
+    .badge.mid { background: var(--mid); }
+
+    .empty {
+      padding: 20px;
+      border-radius: 20px;
+      border: 1px dashed rgba(24, 35, 42, 0.18);
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--muted);
+      line-height: 1.75;
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 1040px) {
+      .page-layout,
+      .level-layout,
+      .config-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .user-shell { min-width: 100%; }
+      #levelNavMount {
+        position: static;
+        width: auto;
+        margin-left: 0;
+        margin-bottom: 16px;
+      }
+      .level-nav {
+        position: static;
+        width: 100%;
+      }
+      .level-nav-list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .floating-card {
+        position: static;
+        width: 100%;
+        margin-top: 12px;
+        transform: none;
+      }
+      .config-floating-card {
+        position: static;
+        width: 100%;
+        margin-top: 12px;
+        transform: none;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .wrap { width: min(100% - 20px, 100%); }
+      .hero, .section-card, .sidebar-card, .content-card, .user-card, .floating-card { border-radius: 22px; }
+      .hero, .section-card, .sidebar-card, .content-card { padding: 18px; }
+      .segment { width: 100%; }
+      .segment button { flex: 1 1 0; min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div class="topbar">
+        <div>
+          <div class="eyebrow">Teacher Workspace</div>
+          <h1>教师端首页</h1>
+          <p>首页保留课程区在左、学生与作业工作台在右的稳定布局，同时将学段目录收回到页面整体左侧，便于直接定位到本科生、研究生、博士生对应部分。</p>
+          <div class="hero-actions">
+            <a class="btn primary" href="./教师端_发布作业.html">发布作业</a>
+            <a class="btn" href="./教师端_作业列表.html">查看作业列表</a>
+          </div>
+        </div>
+
+        <div class="user-shell">
+          <button class="user-card" id="userTrigger" type="button">
+            <div class="avatar" id="teacherAvatar">教</div>
+            <div>
+              <div class="user-label">当前教师</div>
+              <div class="user-name" id="teacherTriggerName">教师账号</div>
+              <div class="user-value" id="teacherTriggerValue">工号与联系方式</div>
+            </div>
+          </button>
+          <div class="popover" id="userPopover">
+            <div class="popover-head">
+              <div class="avatar" id="teacherAvatarPopover">教</div>
+              <div>
+                <div class="name" id="teacherName"></div>
+                <div class="meta" id="teacherMeta"></div>
+              </div>
+            </div>
+            <div class="profile-actions">
+              <button class="btn small" id="logoutBtn" type="button">退出登录</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="page-layout">
+      <div id="levelNavMount"></div>
+      <main class="content-stack" id="levelStack"></main>
+    </div>
+  </div>
+
+  <script src="./auth.js"></script>
+  <script src="./teacher-system-store.js"></script>
+  <script src="./teacher-assignments.js"></script>
+  <script src="./review-data.js"></script>
+  <script>
+    const user = window.AuthStore.requireRole("teacher");
+    window.teacherAssignmentStore.syncCurrentReviewCounts(window.reviewData);
+
+    const levels = window.TeacherSystemStore.listLevels();
+    const levelNavMountEl = document.getElementById("levelNavMount");
+    const levelStackEl = document.getElementById("levelStack");
+    const teacherTriggerNameEl = document.getElementById("teacherTriggerName");
+    const teacherTriggerValueEl = document.getElementById("teacherTriggerValue");
+    const teacherNameEl = document.getElementById("teacherName");
+    const teacherMetaEl = document.getElementById("teacherMeta");
+    const teacherAvatarEl = document.getElementById("teacherAvatar");
+    const teacherAvatarPopoverEl = document.getElementById("teacherAvatarPopover");
+    const userTrigger = document.getElementById("userTrigger");
+    const userPopover = document.getElementById("userPopover");
+
+    const state = {
+      selectedCourseByLevel: {},
+      tabByLevel: {},
+      viewByLevel: {},
+      configModeByLevel: {},
+      addCourseOpenLevel: "",
+      focusLevelId: ""
+    };
+
+    levels.forEach(level => {
+      const courses = window.TeacherSystemStore.listCourses(level.id);
+      state.selectedCourseByLevel[level.id] = courses[0] ? courses[0].id : "";
+      state.tabByLevel[level.id] = "students";
+      state.viewByLevel[level.id] = "card";
+      state.configModeByLevel[level.id] = "";
+    });
+
+    function getInitials(name) {
+      return (name || "教师").slice(0, 1);
+    }
+
+    function updateUserInfo() {
+      if (!user) return;
+      teacherTriggerNameEl.textContent = user.name || "教师账号";
+      teacherTriggerValueEl.textContent = `${user.workerId || "未登记"} · ${user.contact || "未登记"}`;
+      teacherNameEl.textContent = user.name || "教师账号";
+      teacherMetaEl.textContent = `工号：${user.workerId || "未登记"}\n联系方式：${user.contact || "未登记"}`;
+      teacherAvatarEl.textContent = getInitials(user.name);
+      teacherAvatarPopoverEl.textContent = getInitials(user.name);
+    }
+
+    function renderLevelRail() {
+      return `
+        <aside class="level-nav">
+          <div class="level-nav-title">学段目录</div>
+          <div class="level-nav-list">
+            ${levels.map(level => `
+              <a class="level-nav-link" data-level-id="${level.id}" href="#section-${level.id}" style="${level.id === state.focusLevelId ? 'background: linear-gradient(135deg, var(--accent), var(--accent-deep)); color: #fff; border-color: transparent;' : ''}">${level.name}</a>
+            `).join("")}
+          </div>
+        </aside>
+      `;
+    }
+
+    function normalize(value) {
+      return String(value || "").replace(/\s+/g, "").trim();
+    }
+
+    function getSubmissionRecords() {
+      try {
+        const records = JSON.parse(localStorage.getItem("homework_submissions") || "[]");
+        return Array.isArray(records) ? records : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function getAssignmentStats(assignment) {
+      const courseStudents = window.TeacherSystemStore.listStudents(assignment.courseId);
+      const submittedNames = new Set();
+      const submittedIds = new Set();
+
+      if (assignment.usesCurrentReviewData && window.reviewData && Array.isArray(window.reviewData.students)) {
+        window.reviewData.students.forEach(student => {
+          submittedNames.add(normalize(student.name));
+        });
+      }
+
+      getSubmissionRecords().forEach(record => {
+        const matchedById = record.assignmentId && record.assignmentId === assignment.id;
+        const matchedByName = normalize(record.assignmentName) === normalize(assignment.name) && normalize(record.courseName) === normalize(assignment.courseName);
+        if (matchedById || matchedByName) {
+          submittedNames.add(normalize(record.name));
+          submittedIds.add(normalize(record.studentId));
+        }
+      });
+
+      const submittedStudents = courseStudents.filter(student =>
+        submittedNames.has(normalize(student.name)) || submittedIds.has(normalize(student.id))
+      );
+
+      const missingStudents = courseStudents.filter(student =>
+        !submittedNames.has(normalize(student.name)) && !submittedIds.has(normalize(student.id))
+      );
+
+      return {
+        expectedCount: courseStudents.length,
+        submittedCount: submittedStudents.length,
+        gradedCount: Math.min(assignment.gradedCount || 0, submittedStudents.length || assignment.gradedCount || 0),
+        missingCount: missingStudents.length,
+        missingStudents
+      };
+    }
+
+    function renderSubmittedCell(stats) {
+      const missingClass = stats.missingCount > 0 ? "bad" : "good";
+      const missingList = stats.missingStudents.length
+        ? `<div class="missing-card">
+            <div class="missing-card-title">未交学生名单</div>
+            <ul class="missing-card-list">
+              ${stats.missingStudents.map(student => `<li>${student.name}</li>`).join("")}
+            </ul>
+          </div>`
+        : "";
+
+      return `
+        <div class="submission-figure">
+          <span>${stats.submittedCount}</span>
+          <span class="missing-indicator ${missingClass}">
+            (${stats.missingCount})
+            ${missingList}
+          </span>
+        </div>
+      `;
+    }
+
+    function renderStudents(levelId, courseId) {
+      const currentView = state.viewByLevel[levelId];
+      const students = courseId ? window.TeacherSystemStore.listStudents(courseId) : [];
+      if (!students.length) {
+        return `<div class="empty">当前课程尚未配置学生。你可以使用“添加学生”逐条录入，或通过“Excel 导入”快速完成初始化。</div>`;
+      }
+
+      if (currentView === "card") {
+        return `<div class="students-grid">${students.map(student => `
+          <div class="student-card">
+            <a class="student-name-link" href="./教师端_学生成长路径.html?courseId=${encodeURIComponent(courseId)}&studentId=${encodeURIComponent(student.id)}">${student.name}</a>
+            <div class="student-meta">
+              学号：${student.id}<br>
+              专业：${student.major || "未配置"}<br>
+              班级：${student.className || "未配置"}<br>
+              联系方式：${student.contact || "未配置"}
+            </div>
+            <div class="inline-actions" style="margin-top:14px;">
+              <a class="btn small" href="./教师端_学生成长路径.html?courseId=${encodeURIComponent(courseId)}&studentId=${encodeURIComponent(student.id)}">查看成长路径</a>
+            </div>
+          </div>
+        `).join("")}</div>`;
+      }
+
+      return `
+        <table class="student-list">
+          <thead>
+            <tr><th>姓名</th><th>学号</th><th>专业</th><th>班级</th><th>联系方式</th><th>成长路径</th></tr>
+          </thead>
+          <tbody>
+            ${students.map(student => `
+              <tr>
+                <td>${student.name}</td>
+                <td>${student.id}</td>
+                <td>${student.major || "未配置"}</td>
+                <td>${student.className || "未配置"}</td>
+                <td>${student.contact || "未配置"}</td>
+                <td><a class="btn small" href="./教师端_学生成长路径.html?courseId=${encodeURIComponent(courseId)}&studentId=${encodeURIComponent(student.id)}">查看成长路径</a></td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function renderAssignments(courseId) {
+      if (!courseId) {
+        return `<div class="empty">请先选择课程。</div>`;
+      }
+      const assignments = window.teacherAssignmentStore.listAssignments().filter(item => item.courseId === courseId);
+      if (!assignments.length) {
+        return `<div class="empty">当前课程尚未发布作业，可直接点击“发布作业”。</div>`;
+      }
+      return `
+        <div class="assign-table-wrap">
+          <table class="assign-table">
+          <colgroup>
+            <col><col><col><col><col><col><col>
+          </colgroup>
+          <thead>
+            <tr><th>作业名称</th><th>应交人数</th><th>已交人数</th><th>已改人数</th><th>创建时间</th><th>状态</th><th>操作</th></tr>
+          </thead>
+          <tbody>
+            ${assignments.map(item => {
+              const stats = getAssignmentStats(item);
+              return `
+              <tr>
+                <td>${item.name}</td>
+                <td>${stats.expectedCount}</td>
+                <td>${renderSubmittedCell(stats)}</td>
+                <td>${stats.gradedCount}</td>
+                <td>${item.createdAt}</td>
+                <td><span class="badge ${item.collectionOpen ? "good" : "mid"}">${item.collectionOpen ? "收集中" : "未收集"}</span></td>
+                <td>
+                  <div class="inline-actions">
+                    <a class="btn small" href="${item.detailPage}?id=${encodeURIComponent(item.id)}">查看详情</a>
+                    <a class="btn small" href="./教师端_发布作业.html?editId=${encodeURIComponent(item.id)}">编辑</a>
+                    <button class="btn small" type="button" onclick="toggleCollection('${item.id}')">${item.collectionOpen ? "停止收集" : "开始收集"}</button>
+                    <button class="btn small" type="button" onclick="deleteAssignment('${item.id}')">删除作业</button>
+                  </div>
+                </td>
+              </tr>
+            `;
+            }).join("")}
+          </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderConfigPopover(levelId) {
+      const mode = state.configModeByLevel[levelId];
+      return `
+        <div class="config-floating-card ${mode ? "show" : ""}" id="configCard-${levelId}">
+          <div class="${mode === "manual" ? "" : "hidden"}">
+            <h4 style="margin-bottom:10px;">添加学生</h4>
+            <div class="muted" style="margin-bottom:10px;">用于零星补录单个学生。</div>
+            <div class="field"><label for="studentNameInput-${levelId}">姓名</label><input id="studentNameInput-${levelId}" type="text" placeholder="请输入姓名"></div>
+            <div class="field"><label for="studentIdInput-${levelId}">学号</label><input id="studentIdInput-${levelId}" type="text" placeholder="请输入学号"></div>
+            <div class="field"><label for="studentMajorInput-${levelId}">专业</label><input id="studentMajorInput-${levelId}" type="text" placeholder="请输入专业"></div>
+            <div class="field"><label for="studentClassInput-${levelId}">班级</label><input id="studentClassInput-${levelId}" type="text" placeholder="请输入班级"></div>
+            <div class="field"><label for="studentContactInput-${levelId}">联系方式</label><input id="studentContactInput-${levelId}" type="text" placeholder="请输入联系方式"></div>
+            <button class="btn primary" type="button" onclick="saveStudent('${levelId}')">保存学生</button>
+          </div>
+
+          <div class="${mode === "batch" ? "" : "hidden"}">
+            <h4 style="margin-bottom:10px;">Excel 导入</h4>
+            <div class="muted" style="margin-bottom:10px;">将 Excel 中的学生表复制后直接粘贴到下方文本框。首行建议为：姓名、学号、专业、班级、联系方式。</div>
+            <div class="field"><label for="batchInput-${levelId}">批量导入内容</label><textarea id="batchInput-${levelId}" placeholder="姓名\t学号\t专业\t班级\t联系方式"></textarea></div>
+            <button class="btn primary" type="button" onclick="importStudents('${levelId}')">批量导入</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderLevelSection(level) {
+      const courses = window.TeacherSystemStore.listCourses(level.id);
+      const courseId = state.selectedCourseByLevel[level.id];
+      const course = window.TeacherSystemStore.getCourse(courseId);
+      const currentTab = state.tabByLevel[level.id];
+      const currentView = state.viewByLevel[level.id];
+      const addCourseOpen = state.addCourseOpenLevel === level.id;
+      const publishHref = course ? `./教师端_发布作业.html?level=${encodeURIComponent(level.id)}&courseId=${encodeURIComponent(course.id)}` : `./教师端_发布作业.html?level=${encodeURIComponent(level.id)}`;
+
+      return `
+        <section class="section-card" id="section-${level.id}">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">${level.name}</div>
+              <h2>${level.name}</h2>
+              <p class="section-desc">本学段延续左侧课程、右侧学生与作业工作台的布局。课程卡片尺寸保持与原“学段和课程”区域一致，便于快速切换与管理。</p>
+            </div>
+          </div>
+
+          <div class="level-layout">
+            <aside class="sidebar-card">
+              <div class="sidebar-top" data-floating-wrap="${level.id}">
+                <h3>课程</h3>
+                <button class="btn small" type="button" onclick="toggleAddCourse('${level.id}')">新增课程</button>
+                <div class="floating-card ${addCourseOpen ? "show" : ""}" id="addCourseCard-${level.id}">
+                  <h3 style="margin-bottom:10px;">新增课程</h3>
+                  <div class="muted" style="margin-bottom:12px;">课程会自动归属到当前学段，鼠标离开该区域后卡片关闭。</div>
+                  <div class="field">
+                    <label for="newCourseName-${level.id}">课程名称</label>
+                    <input id="newCourseName-${level.id}" type="text" placeholder="请输入课程名称">
+                  </div>
+                  <div class="inline-actions">
+                    <button class="btn primary" type="button" onclick="createCourse('${level.id}')">确认新增</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="course-list">
+                ${courses.length ? courses.map(item => `
+                  <div class="course-item ${item.id === courseId ? "active" : ""}" onclick="selectCourse('${level.id}', '${item.id}')">
+                    <div class="course-name">${item.name}</div>
+                    <div class="course-meta">
+                      学生人数：${window.TeacherSystemStore.listStudents(item.id).length}<br>
+                      已发布作业：${window.teacherAssignmentStore.listAssignments().filter(assignment => assignment.courseId === item.id).length}
+                    </div>
+                  </div>
+                `).join("") : `<div class="empty">当前学段尚未创建课程。</div>`}
+              </div>
+              <div class="muted" style="margin-top:14px;">点击课程卡片即可切换右侧工作台内容。新增课程入口不再常驻，下拉式浮层只在需要时出现。</div>
+            </aside>
+
+            <main class="content-card">
+              <div class="workspace-header">
+                <div class="workspace-heading">
+                  <div>
+                    <h3>${course ? course.name : "课程工作台"}</h3>
+                    <div class="muted">${course ? `${level.name} · 学生 ${window.TeacherSystemStore.listStudents(course.id).length} 人` : "请先创建或选择课程。"}</div>
+                  </div>
+                </div>
+                <div class="mode-tabs">
+                  <button class="${currentTab === "students" ? "active" : ""}" type="button" onclick="setTab('${level.id}', 'students')">学生</button>
+                  <button class="${currentTab === "assignments" ? "active" : ""}" type="button" onclick="setTab('${level.id}', 'assignments')">作业</button>
+                </div>
+              </div>
+
+              <div class="${currentTab === "students" ? "" : "hidden"}">
+                <div class="sub-toolbar">
+                  <div class="toolbar-block">
+                    <span class="sub-toolbar-title">展示方式</span>
+                    <div class="segment compact">
+                      <button class="${currentView === "card" ? "active" : ""}" type="button" onclick="setView('${level.id}', 'card')">卡片视图</button>
+                      <button class="${currentView === "list" ? "active" : ""}" type="button" onclick="setView('${level.id}', 'list')">列表视图</button>
+                    </div>
+                  </div>
+                  <div class="toolbar-block config-popover-anchor">
+                    <span class="sub-toolbar-title">学生配置</span>
+                    <div class="segment compact">
+                      <button class="${state.configModeByLevel[level.id] === "manual" ? "active" : ""}" type="button" onclick="toggleConfig('${level.id}', 'manual')">添加学生</button>
+                      <button class="${state.configModeByLevel[level.id] === "batch" ? "active" : ""}" type="button" onclick="toggleConfig('${level.id}', 'batch')">Excel 导入</button>
+                    </div>
+                    ${renderConfigPopover(level.id)}
+                  </div>
+                </div>
+                ${course ? renderStudents(level.id, course.id) : `<div class="empty">请先在左侧选择课程。</div>`}
+              </div>
+
+              <div class="${currentTab === "assignments" ? "" : "hidden"}">
+                <div class="toolbar">
+                  <div class="muted">作业详情入口统一从列表进入。当前课程下可直接查看详情，或进入总作业列表做统一管理。</div>
+                  <div class="inline-actions">
+                    <a class="btn primary" href="${publishHref}">发布作业</a>
+                  </div>
+                </div>
+                ${renderAssignments(course ? course.id : "")}
+              </div>
+            </main>
+          </div>
+        </section>
+      `;
+    }
+
+    function render() {
+      levelNavMountEl.innerHTML = renderLevelRail();
+      const visibleLevels = state.focusLevelId
+        ? levels.filter(level => level.id === state.focusLevelId)
+        : levels;
+      levelStackEl.innerHTML = visibleLevels.map(level => renderLevelSection(level)).join("");
+      bindLevelRail();
+      bindFloatingClose();
+      bindConfigClose();
+    }
+
+    function bindLevelRail() {
+      levelNavMountEl.querySelectorAll(".level-nav-link").forEach(link => {
+        link.addEventListener("click", event => {
+          event.preventDefault();
+          const levelId = link.dataset.levelId || "";
+          state.focusLevelId = state.focusLevelId === levelId ? "" : levelId;
+          render();
+          const targetId = state.focusLevelId || levelId;
+          const target = document.getElementById(`section-${targetId}`);
+          if (target) {
+            target.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        });
+      });
+    }
+
+    function bindFloatingClose() {
+      document.querySelectorAll(".floating-card.show").forEach(card => {
+        card.addEventListener("mouseleave", () => {
+          const levelId = card.id.replace("addCourseCard-", "");
+          if (state.addCourseOpenLevel === levelId) {
+            state.addCourseOpenLevel = "";
+            render();
+          }
+        }, { once: true });
+      });
+    }
+
+    function bindConfigClose() {
+      document.querySelectorAll(".config-floating-card.show").forEach(card => {
+        card.addEventListener("mouseleave", () => {
+          const levelId = card.id.replace("configCard-", "");
+          if (state.configModeByLevel[levelId]) {
+            state.configModeByLevel[levelId] = "";
+            render();
+          }
+        }, { once: true });
+      });
+    }
+
+    function toggleAddCourse(levelId) {
+      state.addCourseOpenLevel = state.addCourseOpenLevel === levelId ? "" : levelId;
+      render();
+    }
+
+    function selectCourse(levelId, courseId) {
+      state.selectedCourseByLevel[levelId] = courseId;
+      state.configModeByLevel[levelId] = "";
+      render();
+    }
+
+    function setTab(levelId, tab) {
+      state.tabByLevel[levelId] = tab;
+      if (tab !== "students") {
+        state.configModeByLevel[levelId] = "";
+      }
+      render();
+    }
+
+    function setView(levelId, view) {
+      state.viewByLevel[levelId] = view;
+      render();
+    }
+
+    function toggleConfig(levelId, mode) {
+      state.configModeByLevel[levelId] = state.configModeByLevel[levelId] === mode ? "" : mode;
+      render();
+    }
+
+    function createCourse(levelId) {
+      const input = document.getElementById(`newCourseName-${levelId}`);
+      const name = (input.value || "").trim();
+      if (!name) return;
+      const course = window.TeacherSystemStore.addCourse({ levelId, name });
+      state.selectedCourseByLevel[levelId] = course.id;
+      state.addCourseOpenLevel = "";
+      render();
+    }
+
+    function saveStudent(levelId) {
+      const courseId = state.selectedCourseByLevel[levelId];
+      if (!courseId) return;
+      const name = document.getElementById(`studentNameInput-${levelId}`).value.trim();
+      const id = document.getElementById(`studentIdInput-${levelId}`).value.trim();
+      const major = document.getElementById(`studentMajorInput-${levelId}`).value.trim();
+      const className = document.getElementById(`studentClassInput-${levelId}`).value.trim();
+      const contact = document.getElementById(`studentContactInput-${levelId}`).value.trim();
+      if (!name || !id) return;
+      window.TeacherSystemStore.addStudent(courseId, { name, id, major, className, contact });
+      state.configModeByLevel[levelId] = "";
+      render();
+    }
+
+    function importStudents(levelId) {
+      const courseId = state.selectedCourseByLevel[levelId];
+      if (!courseId) return;
+      const rawText = document.getElementById(`batchInput-${levelId}`).value;
+      const count = window.TeacherSystemStore.importStudentsFromText(courseId, rawText);
+      if (count > 0) {
+        state.configModeByLevel[levelId] = "";
+        render();
+      }
+    }
+
+    function toggleCollection(id) {
+      window.teacherAssignmentStore.toggleCollection(id);
+      render();
+    }
+
+    function deleteAssignment(id) {
+      const assignment = window.teacherAssignmentStore.getAssignment(id);
+      if (!assignment) return;
+      const confirmed = window.confirm(`确认删除作业“${assignment.name}”吗？`);
+      if (!confirmed) return;
+      window.teacherAssignmentStore.deleteAssignment(id);
+      render();
+    }
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      window.AuthStore.logout();
+      window.location.href = "./login.html";
+    });
+
+    userTrigger.addEventListener("click", () => {
+      userPopover.classList.toggle("show");
+    });
+
+    document.addEventListener("click", event => {
+      if (!userPopover.contains(event.target) && !userTrigger.contains(event.target)) {
+        userPopover.classList.remove("show");
+      }
+    });
+
+    window.toggleAddCourse = toggleAddCourse;
+    window.selectCourse = selectCourse;
+    window.setTab = setTab;
+    window.setView = setView;
+    window.toggleConfig = toggleConfig;
+    window.createCourse = createCourse;
+    window.saveStudent = saveStudent;
+    window.importStudents = importStudents;
+    window.toggleCollection = toggleCollection;
+    window.deleteAssignment = deleteAssignment;
+
+    updateUserInfo();
+    render();
+  </script>
+</body>
+</html>

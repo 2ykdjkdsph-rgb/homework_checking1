@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教师端_作业列表</title>
+  <style>
+    :root {
+      --panel: rgba(255, 251, 244, 0.94);
+      --line: rgba(24, 35, 42, 0.12);
+      --ink: #1e2b2f;
+      --muted: #607074;
+      --accent: #0c6a78;
+      --accent-deep: #084f59;
+      --good: #2f7d5c;
+      --mid: #d18c22;
+      --shadow: 0 18px 60px rgba(44, 33, 22, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: "Source Han Sans SC", "Noto Sans SC", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(177, 101, 43, 0.18), transparent 30%),
+        radial-gradient(circle at top right, rgba(12, 106, 120, 0.14), transparent 30%),
+        linear-gradient(180deg, #f8f3ec 0%, #efe5d6 100%);
+    }
+
+    .wrap {
+      width: min(1380px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 40px;
+    }
+
+    .hero, .section {
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,0.7);
+      border-radius: 26px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero { padding: 28px; }
+    .section { margin-top: 24px; padding: 24px; }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      font-size: 13px;
+      letter-spacing: 0.16em;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+
+    h1, h2, p { margin: 0; }
+    h1 { font-size: clamp(28px, 4vw, 44px); line-height: 1.08; }
+
+    .hero p {
+      margin-top: 14px;
+      color: var(--muted);
+      line-height: 1.75;
+      max-width: 980px;
+      font-size: 15px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(24, 35, 42, 0.08);
+      text-decoration: none;
+      color: var(--ink);
+      background: rgba(255,255,255,0.8);
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.72);
+    }
+
+    table {
+      width: 100%;
+      min-width: 0;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    th, td {
+      padding: 12px 10px;
+      text-align: left;
+      border-bottom: 1px solid rgba(24, 35, 42, 0.08);
+      font-size: 13px;
+      vertical-align: middle;
+      word-break: break-word;
+    }
+
+    td:last-child { white-space: nowrap; }
+
+    th:nth-child(7),
+    td:nth-child(7) {
+      padding-right: 12px;
+    }
+
+    th:nth-child(8),
+    td:nth-child(8) {
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+
+    th:nth-child(9),
+    td:nth-child(9) {
+      padding-left: 12px;
+    }
+
+    th {
+      color: var(--muted);
+      background: rgba(255,255,255,0.76);
+      font-weight: 700;
+    }
+
+    .assignment-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .badge.good { background: var(--good); }
+    .badge.mid { background: var(--mid); }
+
+    .submission-figure {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+    }
+
+    .missing-indicator {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      font-weight: 800;
+      cursor: default;
+    }
+
+    .missing-indicator.good { color: var(--good); }
+    .missing-indicator.bad { color: #b23b31; }
+
+    .missing-card {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: calc(100% + 10px);
+      transform: translateY(-50%);
+      min-width: 220px;
+      max-width: 280px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(24, 35, 42, 0.1);
+      background: rgba(255,255,255,1);
+      box-shadow: 0 18px 40px rgba(46, 34, 21, 0.14);
+      z-index: 8;
+      color: var(--ink);
+    }
+
+    .missing-indicator.bad:hover .missing-card { display: block; }
+
+    tbody tr:last-child .missing-card {
+      top: calc(50% - 28px);
+    }
+
+    .missing-card-title {
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .missing-card-list {
+      margin: 0;
+      padding-left: 16px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .ops {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 8px;
+    }
+
+    .ops .btn {
+      min-height: 34px;
+      padding: 0 12px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .empty {
+      display: none;
+      border-radius: 18px;
+      border: 1px dashed rgba(24, 35, 42, 0.16);
+      background: rgba(255,255,255,0.68);
+      padding: 20px;
+      color: var(--muted);
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div class="eyebrow">Teacher Assignment List</div>
+      <h1>教师端作业列表</h1>
+      <p>本页汇总当前已发布作业。教师可统一查看作业详情、编辑作业配置、控制收集状态，并删除无效作业。作业详情入口统一从列表进入。</p>
+      <div class="hero-actions">
+        <a class="btn" href="./index.html">返回教师首页</a>
+        <a class="btn primary" href="./教师端_发布作业.html">发布作业</a>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 style="margin-bottom:16px;">当前发布的作业</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>作业名称</th>
+              <th>所属学段</th>
+              <th>所属课程</th>
+              <th>应交人数</th>
+              <th>已交人数</th>
+              <th>已改人数</th>
+              <th>创建时间</th>
+              <th>状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="assignmentRows"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="emptyState">当前没有已发布作业，请先进入“发布作业”页面创建新作业。</div>
+    </section>
+  </div>
+
+  <script src="./auth.js"></script>
+  <script src="./review-data.js"></script>
+  <script src="./teacher-system-store.js"></script>
+  <script src="./teacher-assignments.js"></script>
+  <script>
+    window.AuthStore.requireRole("teacher");
+    const rowsEl = document.getElementById("assignmentRows");
+    const emptyEl = document.getElementById("emptyState");
+
+    function normalize(value) {
+      return String(value || "").replace(/\s+/g, "").trim();
+    }
+
+    function getSubmissionRecords() {
+      try {
+        const records = JSON.parse(localStorage.getItem("homework_submissions") || "[]");
+        return Array.isArray(records) ? records : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function getAssignmentStats(assignment) {
+      const courseStudents = window.TeacherSystemStore.listStudents(assignment.courseId);
+      const submittedNames = new Set();
+      const submittedIds = new Set();
+
+      if (assignment.usesCurrentReviewData && window.reviewData && Array.isArray(window.reviewData.students)) {
+        window.reviewData.students.forEach(student => {
+          submittedNames.add(normalize(student.name));
+        });
+      }
+
+      getSubmissionRecords().forEach(record => {
+        const matchedById = record.assignmentId && record.assignmentId === assignment.id;
+        const matchedByName = normalize(record.assignmentName) === normalize(assignment.name) && normalize(record.courseName) === normalize(assignment.courseName);
+        if (matchedById || matchedByName) {
+          submittedNames.add(normalize(record.name));
+          submittedIds.add(normalize(record.studentId));
+        }
+      });
+
+      const submittedStudents = courseStudents.filter(student =>
+        submittedNames.has(normalize(student.name)) || submittedIds.has(normalize(student.id))
+      );
+
+      const missingStudents = courseStudents.filter(student =>
+        !submittedNames.has(normalize(student.name)) && !submittedIds.has(normalize(student.id))
+      );
+
+      return {
+        expectedCount: courseStudents.length,
+        submittedCount: submittedStudents.length,
+        gradedCount: Math.min(assignment.gradedCount || 0, submittedStudents.length || assignment.gradedCount || 0),
+        missingCount: missingStudents.length,
+        missingStudents
+      };
+    }
+
+    function renderSubmittedCell(stats) {
+      const missingClass = stats.missingCount > 0 ? "bad" : "good";
+      const missingList = stats.missingStudents.length ? `
+        <div class="missing-card">
+          <div class="missing-card-title">未交学生名单</div>
+          <ul class="missing-card-list">
+            ${stats.missingStudents.map(student => `<li>${student.name}</li>`).join("")}
+          </ul>
+        </div>
+      ` : "";
+
+      return `
+        <div class="submission-figure">
+          <span>${stats.submittedCount}</span>
+          <span class="missing-indicator ${missingClass}">
+            (${stats.missingCount})
+            ${missingList}
+          </span>
+        </div>
+      `;
+    }
+
+    function render() {
+      const store = window.teacherAssignmentStore;
+      store.syncCurrentReviewCounts(window.reviewData);
+      const assignments = store.listAssignments();
+      emptyEl.style.display = assignments.length ? "none" : "block";
+      rowsEl.innerHTML = assignments.map(item => {
+        const stats = getAssignmentStats(item);
+        return `
+        <tr>
+          <td>
+            <a class="assignment-link" href="${item.detailPage}?id=${encodeURIComponent(item.id)}">${item.name}</a>
+            <div class="meta">
+              <span class="badge ${item.collectionOpen ? "good" : "mid"}">${item.collectionOpen ? "收集中" : "未收集"}</span>
+              <span>${item.standardFileName || "未记录标准文件"}</span>
+            </div>
+          </td>
+          <td>${item.levelName || "未分配学段"}</td>
+          <td>${item.courseName || "未分配课程"}</td>
+          <td>${stats.expectedCount}</td>
+          <td>${renderSubmittedCell(stats)}</td>
+          <td>${stats.gradedCount}</td>
+          <td>${item.createdAt}</td>
+          <td><span class="badge ${item.collectionOpen ? "good" : "mid"}">${item.collectionOpen ? "收集中" : "未收集"}</span></td>
+          <td>
+            <div class="ops">
+              <a class="btn" href="${item.detailPage}?id=${encodeURIComponent(item.id)}">查看</a>
+              <a class="btn" href="./教师端_发布作业.html?editId=${encodeURIComponent(item.id)}">编辑</a>
+              <button class="btn" type="button" onclick="toggleCollection('${item.id}')">${item.collectionOpen ? "停止收集" : "开始收集"}</button>
+              <button class="btn" type="button" onclick="deleteAssignment('${item.id}')">删除作业</button>
+            </div>
+          </td>
+        </tr>
+      `;
+      }).join("");
+    }
+
+    function toggleCollection(id) {
+      window.teacherAssignmentStore.toggleCollection(id);
+      render();
+    }
+
+    function deleteAssignment(id) {
+      const assignment = window.teacherAssignmentStore.getAssignment(id);
+      if (!assignment) return;
+      const confirmed = window.confirm(`确认删除作业“${assignment.name}”吗？`);
+      if (!confirmed) return;
+      window.teacherAssignmentStore.deleteAssignment(id);
+      render();
+    }
+
+    window.toggleCollection = toggleCollection;
+    window.deleteAssignment = deleteAssignment;
+    render();
+  </script>
+</body>
+</html>

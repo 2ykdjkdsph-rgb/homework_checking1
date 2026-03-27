@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教师端｜作业详情</title>
+  <style>
+    :root {
+      --bg: #f5efe6;
+      --panel: rgba(255, 251, 244, 0.94);
+      --line: rgba(24, 35, 42, 0.12);
+      --ink: #1e2b2f;
+      --muted: #607074;
+      --accent: #0c6a78;
+      --accent-2: #b1652b;
+      --good: #2f7d5c;
+      --mid: #d18c22;
+      --risk: #ab4232;
+      --shadow: 0 18px 60px rgba(44, 33, 22, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: "Source Han Sans SC", "Noto Sans SC", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(177, 101, 43, 0.18), transparent 30%),
+        radial-gradient(circle at top right, rgba(12, 106, 120, 0.14), transparent 30%),
+        linear-gradient(180deg, #f8f3ec 0%, #efe5d6 100%);
+    }
+
+    .wrap {
+      width: min(1380px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 40px;
+    }
+
+    .hero, .section {
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,0.7);
+      border-radius: 26px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -60px;
+      top: -60px;
+      width: 260px;
+      height: 260px;
+      background: radial-gradient(circle, rgba(177, 101, 43, 0.18), transparent 68%);
+      pointer-events: none;
+    }
+
+    h1, h2, h3, p { margin: 0; }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      font-size: 13px;
+      letter-spacing: 0.16em;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: clamp(28px, 4vw, 46px);
+      line-height: 1.08;
+      max-width: 100%;
+    }
+
+    .hero p {
+      max-width: 980px;
+      margin-top: 14px;
+      line-height: 1.75;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(24, 35, 42, 0.08);
+      text-decoration: none;
+      color: var(--ink);
+      background: rgba(255,255,255,0.78);
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, var(--accent), #084f59);
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .stat {
+      background: rgba(255,255,255,0.72);
+      border-radius: 18px;
+      border: 1px solid rgba(24, 35, 42, 0.08);
+      padding: 16px 18px;
+    }
+
+    .stat .value {
+      font-size: 30px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .stat .label {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .section {
+      margin-top: 24px;
+      padding: 24px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .section-head h2 {
+      font-size: 22px;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .sort-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    input[type="search"] {
+      min-width: 280px;
+      height: 42px;
+      border-radius: 999px;
+      border: 1px solid rgba(24, 35, 42, 0.14);
+      padding: 0 16px;
+      font-size: 14px;
+      background: rgba(255,255,255,0.82);
+      color: var(--ink);
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,251,246,0.96));
+      padding: 20px;
+    }
+
+    .student-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+
+    .student-name {
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .student-topic {
+      margin-top: 6px;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 14px;
+    }
+
+    .tag {
+      border-radius: 999px;
+      padding: 8px 12px;
+      background: linear-gradient(135deg, var(--accent-2), #8f4f25);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .score-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .score-line {
+      display: grid;
+      gap: 6px;
+    }
+
+    .score-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .bar {
+      height: 10px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(24, 35, 42, 0.08);
+    }
+
+    .fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    }
+
+    .summary {
+      margin-top: 16px;
+      color: var(--ink);
+      line-height: 1.8;
+      font-size: 14px;
+    }
+
+    .matrix-shell {
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.72);
+      overflow: hidden;
+    }
+
+    .matrix-scroll {
+      overflow-x: auto;
+    }
+
+    table.matrix {
+      border-collapse: separate;
+      border-spacing: 0;
+      min-width: 960px;
+      width: max-content;
+    }
+
+    .matrix th,
+    .matrix td {
+      border-right: 1px solid rgba(24, 35, 42, 0.08);
+      border-bottom: 1px solid rgba(24, 35, 42, 0.08);
+      vertical-align: top;
+      background: rgba(255,255,255,0.72);
+    }
+
+    .matrix th:first-child,
+    .matrix td:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      background: #fbf6ef;
+      min-width: 230px;
+      width: 230px;
+      font-weight: 700;
+    }
+
+    .matrix thead th {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      background: #fff8ef;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: left;
+      padding: 14px 12px;
+    }
+
+    .matrix td {
+      width: 260px;
+      min-width: 260px;
+      padding: 14px 12px;
+      font-size: 14px;
+      line-height: 1.65;
+      color: var(--ink);
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+
+    .status-pill.completed { background: var(--good); }
+    .status-pill.partial { background: var(--mid); }
+    .status-pill.missing { background: var(--risk); }
+
+    .note {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .empty {
+      border-radius: 18px;
+      border: 1px dashed rgba(24, 35, 42, 0.16);
+      padding: 18px;
+      color: var(--muted);
+      background: rgba(255,255,255,0.68);
+      display: none;
+    }
+
+    @media (max-width: 980px) {
+      .stats {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      input[type="search"] {
+        min-width: 220px;
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .wrap {
+        width: min(100% - 20px, 100%);
+      }
+
+      .hero,
+      .section {
+        padding: 18px;
+        border-radius: 20px;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .student-top {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div class="eyebrow">Teacher Detail</div>
+      <h1 id="pageTitle">作业详情</h1>
+      <p>
+        本页用于查看单个作业的提交与批改结果。页面保留学生总览卡片与标准执行矩阵，便于教师在一个作业范围内完成检索、排序与评阅回看。
+      </p>
+      <div class="hero-actions">
+        <a class="btn" href="./教师端_作业列表.html">返回作业列表</a>
+        <a class="btn" href="./教师端_发布作业.html">发布作业</a>
+        <a class="btn primary" href="./学生端_作业批改查询.html">打开学生端查询页</a>
+      </div>
+      <div class="stats" id="stats"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>学生总览</h2>
+      </div>
+      <div class="toolbar">
+        <div class="search-box">
+          <input id="studentSearch" type="search" placeholder="输入学生姓名检索，例如：吕翔">
+        </div>
+        <div class="sort-group">
+          <button class="btn" type="button" data-sort="average">按平均总成绩排序</button>
+          <button class="btn" type="button" data-sort="logic">按逻辑与结论排序</button>
+          <button class="btn" type="button" data-sort="academic">按学术表达排序</button>
+          <button class="btn" type="button" data-sort="consistency">按一致性排序</button>
+          <button class="btn" type="button" data-sort="standard">按标准执行排序</button>
+        </div>
+      </div>
+      <div class="hint">搜索仅作用于学生总览。排序默认按分数从高到低排列。</div>
+      <div class="cards" id="studentCards" style="margin-top:16px;"></div>
+      <div class="empty" id="cardsEmptyState">未找到匹配的学生姓名，请检查输入。</div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>标准执行矩阵</h2>
+        <div class="search-box">
+          <input id="matrixSearch" type="search" placeholder="输入学生姓名筛选矩阵列，例如：王依梦">
+        </div>
+      </div>
+      <div class="hint">左侧“标准步骤”列固定，矩阵搜索仅筛选学生列；表格底色保持与当前总览一致。</div>
+      <div class="matrix-shell">
+        <div class="matrix-scroll" id="matrixScroll">
+          <table class="matrix" id="matrixTable"></table>
+        </div>
+      </div>
+      <div class="empty" id="matrixEmptyState" style="margin-top:16px;">矩阵中未找到匹配的学生姓名，请检查输入。</div>
+    </section>
+  </div>
+
+  <script src="./auth.js"></script>
+  <script src="./review-data.js"></script>
+  <script src="./teacher-assignments.js"></script>
+  <script>
+    window.AuthStore.requireRole("teacher");
+    const params = new URLSearchParams(window.location.search);
+    const assignmentId = params.get("id");
+    const assignmentStore = window.teacherAssignmentStore;
+    assignmentStore.syncCurrentReviewCounts(window.reviewData);
+    const assignment = assignmentId ? assignmentStore.getAssignment(assignmentId) : assignmentStore.listAssignments()[0];
+    const data = assignment && assignment.usesCurrentReviewData ? window.reviewData : {
+      ...window.reviewData,
+      students: []
+    };
+    const statsEl = document.getElementById("stats");
+    const pageTitleEl = document.getElementById("pageTitle");
+    const cardsEl = document.getElementById("studentCards");
+    const matrixEl = document.getElementById("matrixTable");
+    const cardsEmptyEl = document.getElementById("cardsEmptyState");
+    const matrixEmptyEl = document.getElementById("matrixEmptyState");
+    const searchEl = document.getElementById("studentSearch");
+    const matrixSearchEl = document.getElementById("matrixSearch");
+    const sortButtons = Array.from(document.querySelectorAll("[data-sort]"));
+
+    const scoreLabels = [
+      ["logic", "逻辑与结论"],
+      ["academic", "学术表达"],
+      ["consistency", "前后支撑一致性"],
+      ["standard", "标准执行"]
+    ];
+
+    let currentSortKey = "average";
+
+    function buildStats() {
+      if (assignment) {
+        pageTitleEl.textContent = `${assignment.name}｜作业详情`;
+      }
+
+      const stats = [
+        { value: assignment ? assignment.submittedCount : 0, label: "当前提交人数" },
+        { value: assignment ? assignment.gradedCount : 0, label: "已批改人数" },
+        { value: assignment ? (assignment.standardFileName || "未记录") : "未记录", label: "评价标准文件" },
+        { value: assignment ? (assignment.collectionOpen ? "收集中" : "未收集") : "未收集", label: "收集状态" }
+      ];
+
+      statsEl.innerHTML = stats.map(item => `
+        <div class="stat">
+          <div class="value">${item.value}</div>
+          <div class="label">${item.label}</div>
+        </div>
+      `).join("");
+    }
+
+    function averageScore(student) {
+      return Math.round((student.scores.logic + student.scores.academic + student.scores.consistency + student.scores.standard) / 4);
+    }
+
+    function sortStudents(students) {
+      return [...students].sort((a, b) => {
+        const scoreA = currentSortKey === "average" ? averageScore(a) : a.scores[currentSortKey];
+        const scoreB = currentSortKey === "average" ? averageScore(b) : b.scores[currentSortKey];
+        return scoreB - scoreA;
+      });
+    }
+
+    function filteredCardStudents() {
+      const keyword = searchEl.value.trim();
+      const students = !keyword ? data.students : data.students.filter(student => student.name.includes(keyword));
+      return sortStudents(students);
+    }
+
+    function filteredMatrixStudents() {
+      const keyword = matrixSearchEl.value.trim();
+      if (!keyword) return data.students;
+      return data.students.filter(student => student.name.includes(keyword));
+    }
+
+    function renderCards(students) {
+      cardsEl.innerHTML = students.map(student => `
+        <article class="card">
+          <div class="student-top">
+            <div>
+              <div class="student-name">${student.name}</div>
+              <div class="student-topic">题目：${student.topic}</div>
+            </div>
+            <div class="tag">${student.tag}</div>
+          </div>
+          <div class="score-grid">
+            ${scoreLabels.map(([key, label]) => `
+              <div class="score-line">
+                <div class="score-head"><span>${label}</span><span>${student.scores[key]} / 100</span></div>
+                <div class="bar"><div class="fill" style="width:${student.scores[key]}%"></div></div>
+              </div>
+            `).join("")}
+          </div>
+          <div class="summary">${student.summary}</div>
+        </article>
+      `).join("");
+    }
+
+    function renderMatrix(students) {
+      const head = `
+        <thead>
+          <tr>
+            <th>标准步骤</th>
+            ${students.map(student => `<th>${student.name}</th>`).join("")}
+          </tr>
+        </thead>
+      `;
+
+      const body = data.standardSteps.map(step => {
+        const cells = students.map(student => {
+          const item = student.matrix.find(entry => entry.step === step);
+          return `
+            <td>
+              <div class="status-pill ${item.status}">${data.statusMap[item.status]}</div>
+              <div class="note">${item.note}</div>
+            </td>
+          `;
+        }).join("");
+        return `<tr><td>${step}</td>${cells}</tr>`;
+      }).join("");
+
+      matrixEl.innerHTML = `${head}<tbody>${body}</tbody>`;
+    }
+
+    function render() {
+      const cardStudents = filteredCardStudents();
+      const matrixStudents = filteredMatrixStudents();
+      cardsEmptyEl.style.display = cardStudents.length ? "none" : "block";
+      matrixEmptyEl.style.display = matrixStudents.length ? "none" : "block";
+      cardsEmptyEl.textContent = assignment && !assignment.usesCurrentReviewData
+        ? "该作业当前尚无已同步的学生批改结果。"
+        : "未找到匹配的学生姓名，请检查输入。";
+      matrixEmptyEl.textContent = assignment && !assignment.usesCurrentReviewData
+        ? "该作业当前尚无已同步的学生批改结果。"
+        : "矩阵中未找到匹配的学生姓名，请检查输入。";
+      renderCards(cardStudents);
+      renderMatrix(matrixStudents);
+    }
+
+    buildStats();
+    render();
+    searchEl.addEventListener("input", render);
+    matrixSearchEl.addEventListener("input", render);
+    sortButtons.forEach(button => {
+      button.addEventListener("click", () => {
+        currentSortKey = button.dataset.sort;
+        render();
+      });
+    });
+  </script>
+</body>
+</html>

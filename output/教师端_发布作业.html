@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教师端 - 发布作业</title>
+  <style>
+    :root{--panel:rgba(255,251,244,.94);--line:rgba(24,35,42,.12);--ink:#1e2b2f;--muted:#607074;--accent:#0c6a78;--accent-deep:#084f59;--shadow:0 18px 60px rgba(44,33,22,.12);--warn:#ab4232;--ok:#2f7d5c}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;color:var(--ink);font-family:"Source Han Sans SC","Noto Sans SC","Segoe UI",sans-serif;background:radial-gradient(circle at top left,rgba(177,101,43,.18),transparent 30%),radial-gradient(circle at top right,rgba(12,106,120,.14),transparent 30%),linear-gradient(180deg,#f8f3ec 0%,#efe5d6 100%)}
+    .wrap{width:min(940px,calc(100% - 32px));margin:0 auto;padding:28px 0 40px}.panel{background:var(--panel);border:1px solid rgba(255,255,255,.7);border-radius:26px;box-shadow:var(--shadow);padding:28px}.eyebrow{margin:0 0 10px;font-size:13px;letter-spacing:.16em;color:var(--accent);text-transform:uppercase}h1,p{margin:0}h1{font-size:clamp(28px,4vw,42px);line-height:1.08}.intro{margin-top:14px;color:var(--muted);line-height:1.75;font-size:15px}
+    .actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:18px}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border-radius:999px;border:1px solid rgba(24,35,42,.08);text-decoration:none;color:var(--ink);background:rgba(255,255,255,.8);font-weight:700;cursor:pointer}.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-deep));color:#fff;border-color:transparent}
+    form{display:grid;gap:16px;margin-top:24px}.field{display:grid;gap:8px}label{font-weight:700;font-size:14px}input[type="text"],input[type="file"],select{width:100%;border-radius:16px;border:1px solid rgba(24,35,42,.14);background:rgba(255,255,255,.82);padding:12px 14px;font-size:14px;color:var(--ink)}
+    .tip,.readonly-note{color:var(--muted);font-size:13px;line-height:1.7}.preview{border-radius:18px;border:1px solid rgba(24,35,42,.08);background:rgba(255,255,255,.72);padding:16px 18px}.preview h3{margin:0 0 10px;font-size:16px}.preview ul{margin:0;padding-left:18px;color:var(--muted);line-height:1.75;font-size:14px}.preview p{color:var(--muted);line-height:1.75;font-size:14px;margin-top:8px}
+    .alert{margin-top:18px;border-radius:18px;padding:16px 18px;font-size:14px;line-height:1.8;display:none}.alert.ok{display:block;background:rgba(47,125,92,.1);border:1px solid rgba(47,125,92,.18);color:var(--ok)}.alert.warn{display:block;background:rgba(171,65,50,.08);border:1px solid rgba(171,65,50,.16);color:var(--warn)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <div class="eyebrow">Teacher Publish</div>
+      <h1 id="pageTitle">发布作业</h1>
+      <p class="intro" id="pageIntro">填写作业名称、所属学段与课程，并上传作业评价标准文件。若标准文件为 Markdown，系统会自动提取第一个标题及其内容，供学生端查询页同步展示。</p>
+      <div class="actions">
+        <a class="btn" href="./index.html">返回教师首页</a>
+        <a class="btn" href="./教师端_作业列表.html">返回作业列表</a>
+      </div>
+      <form id="publishForm">
+        <div class="field">
+          <label for="assignmentName">作业名称</label>
+          <input id="assignmentName" type="text" placeholder="请输入作业名称">
+        </div>
+        <div class="field">
+          <label for="levelSelect">所属学段</label>
+          <select id="levelSelect"></select>
+        </div>
+        <div class="field">
+          <label for="courseSelect">所属课程</label>
+          <select id="courseSelect"></select>
+        </div>
+        <div class="field">
+          <label for="standardFile">作业评价标准文件</label>
+          <input id="standardFile" type="file" accept=".md,.txt,.pdf,.doc,.docx">
+          <div class="tip">推荐上传 UTF-8 编码的 `.md` 文件。若上传的是 Markdown，学生端会自动读取首个标题对应的主链条内容。</div>
+          <div class="readonly-note" id="currentFileNote"></div>
+        </div>
+        <div class="preview" id="previewBox">
+          <h3 id="previewTitle">主链条预览</h3>
+          <div id="previewBody" class="tip">当前尚未读取标准文件内容。若上传 Markdown，将在此处展示首个标题及其正文。</div>
+        </div>
+        <div class="actions">
+          <button class="btn primary" id="submitBtn" type="submit">确认发布</button>
+        </div>
+      </form>
+      <div id="alertBox" class="alert"></div>
+    </div>
+  </div>
+  <script src="./auth.js"></script>
+  <script src="./teacher-system-store.js"></script>
+  <script src="./teacher-assignments.js"></script>
+  <script>
+    window.AuthStore.requireRole("teacher");
+
+    const params = new URLSearchParams(window.location.search);
+    const form = document.getElementById("publishForm");
+    const alertBox = document.getElementById("alertBox");
+    const levelSelect = document.getElementById("levelSelect");
+    const courseSelect = document.getElementById("courseSelect");
+    const assignmentNameInput = document.getElementById("assignmentName");
+    const standardFileInput = document.getElementById("standardFile");
+    const currentFileNote = document.getElementById("currentFileNote");
+    const submitBtn = document.getElementById("submitBtn");
+    const pageTitle = document.getElementById("pageTitle");
+    const pageIntro = document.getElementById("pageIntro");
+    const previewTitle = document.getElementById("previewTitle");
+    const previewBody = document.getElementById("previewBody");
+
+    const editId = params.get("editId") || "";
+    const editingAssignment = editId ? window.teacherAssignmentStore.getAssignment(editId) : null;
+    let currentLevel = params.get("level") || (editingAssignment ? editingAssignment.levelId : "graduate");
+    let currentPreview = editingAssignment?.standardPreview || window.teacherAssignmentStore.getDefaultStandardPreview();
+
+    function renderPreview(preview) {
+      currentPreview = preview || window.teacherAssignmentStore.getDefaultStandardPreview();
+      previewTitle.textContent = currentPreview.title || "主链条";
+      const items = Array.isArray(currentPreview.items) ? currentPreview.items : [];
+      const paragraphs = Array.isArray(currentPreview.paragraphs) ? currentPreview.paragraphs : [];
+      previewBody.innerHTML = [
+        items.length ? `<ul>${items.map(item => `<li>${item}</li>`).join("")}</ul>` : "",
+        paragraphs.map(text => `<p>${text}</p>`).join("")
+      ].join("") || "当前标准文件未解析出可展示的主链条内容。";
+    }
+
+    function renderLevelOptions() {
+      const levels = window.TeacherSystemStore.listLevels();
+      levelSelect.innerHTML = levels.map(level => `
+        <option value="${level.id}" ${level.id === currentLevel ? "selected" : ""}>${level.name}</option>
+      `).join("");
+      renderCourseOptions();
+    }
+
+    function renderCourseOptions() {
+      const courses = window.TeacherSystemStore.listCourses(currentLevel);
+      const presetCourseId = params.get("courseId") || (editingAssignment ? editingAssignment.courseId : "");
+      courseSelect.innerHTML = courses.map(course => `
+        <option value="${course.id}" ${course.id === presetCourseId ? "selected" : ""}>${course.name}</option>
+      `).join("");
+      if (!courseSelect.value && courses[0]) {
+        courseSelect.value = courses[0].id;
+      }
+    }
+
+    function showAlert(type, message) {
+      alertBox.className = `alert ${type}`;
+      alertBox.innerHTML = message;
+    }
+
+    function buildStandardPreviewFromMarkdown(text) {
+      const normalized = String(text || "").replace(/\r\n/g, "\n");
+      const headingMatch = normalized.match(/^#\s+(.+)$/m);
+      if (!headingMatch) {
+        return {
+          title: "主链条",
+          items: [],
+          paragraphs: ["标准文件未识别到 Markdown 一级标题，学生端将回退到默认主链条展示。"],
+          sourceType: "markdown"
+        };
+      }
+
+      const title = headingMatch[1].trim() || "主链条";
+      const startIndex = headingMatch.index + headingMatch[0].length;
+      const nextHeadingMatch = normalized.slice(startIndex).match(/\n#\s+/);
+      const endIndex = nextHeadingMatch ? startIndex + nextHeadingMatch.index : normalized.length;
+      const sectionText = normalized.slice(startIndex, endIndex).trim();
+      const lines = sectionText.split("\n").map(line => line.trim()).filter(Boolean);
+      const items = [];
+      const paragraphs = [];
+      let orderedIndex = 1;
+
+      lines.forEach(line => {
+        if (/^[-*]\s+/.test(line)) {
+          items.push(line.replace(/^[-*]\s+/, "").trim());
+          return;
+        }
+        const ordered = line.match(/^\d+[.)、]\s+(.+)$/);
+        if (ordered) {
+          items.push(ordered[1].trim());
+          orderedIndex += 1;
+          return;
+        }
+        paragraphs.push(line);
+      });
+
+      return {
+        title,
+        items,
+        paragraphs: paragraphs.length ? paragraphs : ["该标题下未提取到额外正文，将以标题作为学生端主链条说明。"],
+        sourceType: "markdown"
+      };
+    }
+
+    async function readPreviewFromFile(file) {
+      if (!file) return currentPreview;
+      const lower = file.name.toLowerCase();
+      if (!lower.endsWith(".md") && !lower.endsWith(".txt")) {
+        return {
+          title: "主链条",
+          items: [],
+          paragraphs: ["当前上传文件不是 Markdown 文本，学生端将暂不展示主链条正文。建议上传 UTF-8 编码的 `.md` 文件。"],
+          sourceType: "binary"
+        };
+      }
+      const text = await file.text();
+      return buildStandardPreviewFromMarkdown(text);
+    }
+
+    function hydrateEditingState() {
+      if (!editingAssignment) {
+        renderPreview(currentPreview);
+        return;
+      }
+      pageTitle.textContent = "编辑作业";
+      pageIntro.textContent = "当前处于编辑模式。可修改作业名称、所属学段、所属课程和标准文件；若不重新上传标准文件，则沿用原标准文件及其主链条预览。";
+      submitBtn.textContent = "保存修改";
+      assignmentNameInput.value = editingAssignment.name || "";
+      currentLevel = editingAssignment.levelId || currentLevel;
+      renderLevelOptions();
+      courseSelect.value = editingAssignment.courseId || courseSelect.value;
+      currentFileNote.textContent = editingAssignment.standardFileName ? `当前标准文件：${editingAssignment.standardFileName}` : "当前未记录标准文件。";
+      renderPreview(currentPreview);
+    }
+
+    standardFileInput.addEventListener("change", async () => {
+      const file = standardFileInput.files[0];
+      if (!file) {
+        renderPreview(editingAssignment?.standardPreview || window.teacherAssignmentStore.getDefaultStandardPreview());
+        return;
+      }
+      const preview = await readPreviewFromFile(file);
+      renderPreview(preview);
+      currentFileNote.textContent = `当前标准文件：${file.name}`;
+    });
+
+    levelSelect.addEventListener("change", () => {
+      currentLevel = levelSelect.value;
+      renderCourseOptions();
+    });
+
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      const name = assignmentNameInput.value.trim();
+      const file = standardFileInput.files[0];
+      const course = window.TeacherSystemStore.getCourse(courseSelect.value);
+
+      if (!name) {
+        showAlert("warn", "请先填写作业名称。");
+        return;
+      }
+
+      if (!editingAssignment && !file) {
+        showAlert("warn", "请上传作业评价标准文件。");
+        return;
+      }
+
+      const standardPreview = file ? await readPreviewFromFile(file) : currentPreview;
+      const payload = {
+        name,
+        levelId: levelSelect.value,
+        levelName: course ? course.levelName : "",
+        courseId: courseSelect.value,
+        courseName: course ? course.name : "",
+        standardFileName: file ? file.name : (editingAssignment ? editingAssignment.standardFileName : ""),
+        standardPreview,
+        createdAt: editingAssignment ? editingAssignment.createdAt : new Date().toLocaleDateString("zh-CN")
+      };
+
+      if (editingAssignment) {
+        window.teacherAssignmentStore.updateAssignment(editingAssignment.id, payload);
+        showAlert("ok", `作业“${name}”已更新，正在返回作业列表页。`);
+      } else {
+        window.teacherAssignmentStore.createAssignment(payload);
+        showAlert("ok", `作业“${name}”已发布，正在返回作业列表页。`);
+      }
+
+      setTimeout(() => {
+        window.location.href = "./教师端_作业列表.html";
+      }, 700);
+    });
+
+    renderLevelOptions();
+    hydrateEditingState();
+  </script>
+</body>
+</html>

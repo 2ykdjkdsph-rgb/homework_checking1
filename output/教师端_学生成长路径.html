@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教师端 - 学生成长路径</title>
+  <style>
+    :root{--panel:rgba(255,251,244,.94);--line:rgba(24,35,42,.12);--ink:#1e2b2f;--muted:#607074;--accent:#0c6a78;--good:#2f7d5c;--shadow:0 18px 60px rgba(44,33,22,.12);--c1:#0c6a78;--c2:#4f8e98;--c3:#7f908f;--c4:#b88743;--c5:#d39f73}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;color:var(--ink);font-family:"Source Han Sans SC","Noto Sans SC","Segoe UI",sans-serif;background:radial-gradient(circle at top left,rgba(177,101,43,.18),transparent 30%),radial-gradient(circle at top right,rgba(12,106,120,.14),transparent 30%),linear-gradient(180deg,#f8f3ec 0%,#efe5d6 100%)}h1,h2,h3,p{margin:0}
+    .wrap{width:min(1280px,calc(100% - 32px));margin:0 auto;padding:28px 0 42px}.hero,.section{background:var(--panel);border:1px solid rgba(255,255,255,.72);border-radius:28px;box-shadow:var(--shadow)}.hero{padding:28px}.section{margin-top:24px;padding:24px}
+    .eyebrow{margin:0 0 10px;font-size:13px;letter-spacing:.16em;color:var(--accent);text-transform:uppercase}h1{font-size:clamp(28px,4vw,44px);line-height:1.08}.hero p{margin-top:14px;color:var(--muted);line-height:1.8;max-width:960px;font-size:15px}
+    .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border-radius:999px;border:1px solid rgba(24,35,42,.08);text-decoration:none;color:var(--ink);background:rgba(255,255,255,.82);font-weight:700;cursor:pointer}
+    .growth-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,.9fr);gap:18px}.panel{border-radius:24px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.84),rgba(255,251,246,.98));padding:22px}
+    .panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:18px;flex-wrap:wrap}.panel-head p{color:var(--muted);line-height:1.75;font-size:14px;max-width:680px}
+    .hint-tag{display:inline-flex;align-items:center;min-height:28px;padding:0 10px;border-radius:999px;background:rgba(255,255,255,.92);border:1px solid rgba(24,35,42,.08);color:var(--muted);font-size:12px;font-weight:700}
+    .viz-layout{display:grid;grid-template-columns:minmax(0,1fr) 258px;gap:16px;align-items:stretch}.viz-card{position:relative;perspective:1400px}.viz-card-inner{position:relative;min-height:470px;transform-style:preserve-3d;transition:transform .66s cubic-bezier(.2,.72,.22,1)}.viz-card.flipped .viz-card-inner{transform:rotateY(180deg)}
+    .viz-face{position:absolute;inset:0;display:flex;flex-direction:column;border-radius:22px;border:1px solid rgba(24,35,42,.06);background:radial-gradient(circle at center,rgba(12,106,120,.08),transparent 58%),rgba(255,255,255,.58);padding:12px;backface-visibility:hidden;overflow:hidden}.viz-face.back{transform:rotateY(180deg);background:linear-gradient(180deg,rgba(255,255,255,.78),rgba(255,251,246,.98))}
+    .viz-toggle{position:absolute;top:14px;right:14px;z-index:6;min-height:34px;padding:0 12px;border-radius:999px;border:1px solid rgba(24,35,42,.08);background:#fffefb;color:var(--ink);font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 8px 18px rgba(24,35,42,.08);opacity:0;visibility:hidden;pointer-events:none}.viz-face.front .viz-toggle{opacity:1;visibility:visible;pointer-events:auto}.viz-card.flipped .viz-face.front .viz-toggle{opacity:0;visibility:hidden;pointer-events:none}.viz-card.flipped .viz-face.back .viz-toggle{opacity:1;visibility:visible;pointer-events:auto}
+    .chart-frame{position:relative;flex:1 1 auto;width:100%;min-height:0}.viz-face.front .chart-frame{min-height:444px}.viz-face.back .chart-frame{min-height:348px}.chart-interactive{position:absolute;left:18px;right:18px;top:18px;bottom:18px;border-radius:18px}
+    .stack-legend{display:flex;flex-wrap:wrap;gap:8px;margin:42px 0 8px;padding:0 8px;flex:0 0 auto}.stack-pill{display:inline-flex;align-items:center;min-height:28px;padding:0 10px;border-radius:999px;background:rgba(255,255,255,.94);border:1px solid rgba(24,35,42,.08);font-size:12px;font-weight:700;gap:8px}.swatch{width:10px;height:10px;border-radius:999px;flex:0 0 auto}
+    .legend-stack{display:grid;gap:10px;align-content:start}.legend-card{border-radius:18px;border:1px solid rgba(24,35,42,.08);background:rgba(255,255,255,.72);padding:14px 14px 13px;opacity:.6;cursor:pointer;transition:opacity .18s ease,transform .18s ease,border-color .18s ease,box-shadow .18s ease}.legend-card.selected{opacity:1;border-color:rgba(12,106,120,.18);box-shadow:0 12px 28px rgba(12,106,120,.08);transform:translateY(-1px)}
+    .legend-top{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px}.legend-index{font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}.legend-date{font-size:12px;color:var(--muted)}.legend-name{font-size:15px;font-weight:800;line-height:1.55;margin-bottom:6px}.legend-tag{color:var(--muted);font-size:13px;line-height:1.7}
+    .summary-stack{display:grid;gap:18px}.summary-badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.signal{display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;background:rgba(255,255,255,.74);border:1px solid rgba(24,35,42,.08);font-size:12px;font-weight:700}.signal.up{color:var(--good);border-color:rgba(47,125,92,.18);background:rgba(225,242,235,.82)}.signal.flat{color:#86601a;border-color:rgba(177,101,43,.18);background:rgba(248,237,219,.82)}.signal.soft{color:var(--muted)}
+    .meta-list{display:grid;gap:10px;color:var(--muted);font-size:14px;line-height:1.75}.meta-list strong{color:var(--ink);font-weight:800;margin-right:8px}
+    .timeline{display:grid;gap:16px}.timeline-card{border-radius:22px;border:1px solid rgba(24,35,42,.08);background:linear-gradient(180deg,rgba(255,255,255,.84),rgba(255,251,246,.98));padding:18px 18px 16px;opacity:.58;cursor:pointer;transition:opacity .18s ease,transform .18s ease,border-color .18s ease,box-shadow .18s ease}.timeline-card.selected{opacity:1;border-color:rgba(12,106,120,.16);box-shadow:0 12px 26px rgba(12,106,120,.08);transform:translateY(-1px)}
+    .timeline-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:12px}.timeline-head h3{font-size:18px;line-height:1.5;font-weight:800}.timeline-meta{color:var(--muted);font-size:13px;line-height:1.7}.timeline-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:14px}.mini-metric{border-radius:16px;padding:12px 12px 10px;background:rgba(255,255,255,.76);border:1px solid rgba(24,35,42,.06)}.mini-metric-label{color:var(--muted);font-size:12px;margin-bottom:6px}.mini-metric-main{font-size:14px;font-weight:500;color:var(--ink)}.mini-metric-sub{margin-top:4px;font-size:12px;color:var(--muted)}.empty{color:var(--muted);line-height:1.8;padding:24px 0}
+    @media (max-width:1080px){.growth-grid,.viz-layout{grid-template-columns:1fr}}@media (max-width:720px){.wrap{width:min(100% - 20px,100%)}.hero,.section,.panel{border-radius:22px}.hero,.section{padding:18px}.timeline-grid{grid-template-columns:1fr 1fr}.viz-card-inner{min-height:400px}.chart-frame{min-height:374px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div class="eyebrow">Teacher Growth</div>
+      <h1 id="pageTitle">学生成长路径</h1>
+      <p id="pageDesc">这里把每次提交作业视为一个能力训练节点。默认展示最新一次作业形成的能力轮廓；点击右侧任意作业节点后，可回溯查看该次作业对应的能力状态，并在图卡翻转后查看所有作业的堆叠对比。</p>
+      <div class="actions"><a class="btn" id="backLink" href="./index.html">返回教师首页</a></div>
+    </section>
+    <section class="section">
+      <div class="growth-grid">
+        <div class="panel">
+          <div class="panel-head">
+            <div><h2>多维度能力变化</h2><p>点击右侧任一作业节点，可回溯查看该次作业后的能力轮廓。点击图卡边缘区域或右上角按钮，可翻转为按作业名称展示的五维堆叠柱状图；当前选中的作业会在两种图中同步高亮。</p></div>
+            <div class="hint-tag">默认高亮最新一次作业</div>
+          </div>
+          <div class="viz-layout">
+            <div class="viz-card" id="vizCard">
+              <div class="viz-card-inner">
+                <div class="viz-face front">
+                  <button class="viz-toggle" id="flipBtn" type="button">点击翻转</button>
+                  <div class="chart-frame">
+                    <div class="chart-interactive" id="radarCanvas"></div>
+                  </div>
+                </div>
+                <div class="viz-face back">
+                  <button class="viz-toggle" id="flipBtnBack" type="button">点击翻转</button>
+                  <div class="stack-legend" id="stackLegend"></div>
+                  <div class="chart-frame">
+                    <div class="chart-interactive" id="stackedCanvas"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="legend-stack" id="legendStack"></div>
+          </div>
+        </div>
+        <div class="summary-stack">
+          <div class="panel">
+            <div class="panel-head"><div><h2>当前查看节点判断</h2><p id="latestSummary">这里会根据当前选中的作业节点，给出教师视角下的阶段性能力判断。</p></div></div>
+            <div class="summary-badges" id="deltaBadges"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div><h2>学生基础信息</h2><p>用于教师确认当前查看对象、课程归属与作业训练背景。</p></div></div>
+            <div class="meta-list" id="studentMeta"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="panel-head"><div><h2>历次作业后的成长节点</h2><p>这里保留每次作业后的文字性成长印象，便于教师回看学生在不同阶段形成的能力画像。</p></div></div>
+      <div class="timeline" id="timelineBox"></div>
+    </section>
+  </div>
+  <script src="./auth.js"></script>
+  <script src="./teacher-system-store.js"></script>
+  <script src="./growth-viz.js"></script>
+  <script>
+    window.AuthStore.requireRole("teacher");
+    const params=new URLSearchParams(window.location.search),courseId=params.get("courseId"),studentId=params.get("studentId"),course=window.TeacherSystemStore.getCourse(courseId),student=window.TeacherSystemStore.getStudent(courseId,studentId);
+    const pageTitle=document.getElementById("pageTitle"),pageDesc=document.getElementById("pageDesc"),backLink=document.getElementById("backLink"),vizCard=document.getElementById("vizCard"),flipBtn=document.getElementById("flipBtn"),flipBtnBack=document.getElementById("flipBtnBack"),radarCanvas=document.getElementById("radarCanvas"),stackedCanvas=document.getElementById("stackedCanvas"),stackLegend=document.getElementById("stackLegend"),legendStack=document.getElementById("legendStack"),studentMeta=document.getElementById("studentMeta"),latestSummary=document.getElementById("latestSummary"),deltaBadges=document.getElementById("deltaBadges"),timelineBox=document.getElementById("timelineBox");
+    const dimensionColors=["#0c6a78","#2f7d5c","#8a6a2f","#c9724e","#7c6bb3"],state={chartMode:"radar",selectedIndex:-1,history:[]};
+    let resizeTimer=null;
+    if(courseId) backLink.href=`./index.html?level=${encodeURIComponent(course?course.levelId:"")}&courseId=${encodeURIComponent(courseId)}`;
+    const safeText=(v,f="未配置")=>v?String(v):f,clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+    const getMetricValue=(src,key,fallback)=>{const found=Object.entries(src||{}).find(([label])=>String(label).includes(key));return found?Number(found[1]):fallback};
+    function buildGrowthHistory(targetStudent){const submissions=Array.isArray(targetStudent.submissions)?[...targetStudent.submissions]:[];submissions.sort((a,b)=>String(a.date).localeCompare(String(b.date)));const finalResearch=getMetricValue(targetStudent.growthMetrics,"研",68),finalIndependent=getMetricValue(targetStudent.growthMetrics,"主",70),baseResearch=submissions.map(item=>Math.round(item.scores.logic*.24+item.scores.academic*.22+item.scores.consistency*.18+item.scores.standard*.36)),baseIndependent=submissions.map(item=>Math.round(item.scores.logic*.28+item.scores.consistency*.34+item.scores.standard*.22+item.scores.academic*.16)),lastResearch=baseResearch[baseResearch.length-1]||finalResearch,lastIndependent=baseIndependent[baseIndependent.length-1]||finalIndependent;return submissions.map((item,index)=>{const factor=submissions.length<=1?1:index/(submissions.length-1),researchDepth=clamp(Math.round(baseResearch[index]+(finalResearch-lastResearch)*factor),35,95),independentThinking=clamp(Math.round(baseIndependent[index]+(finalIndependent-lastIndependent)*factor),35,95);return{index,date:item.date,assignmentName:item.assignmentName,tag:item.tag,scores:item.scores,dimensions:[{label:"逻辑分析",value:item.scores.logic},{label:"学术表达",value:item.scores.academic},{label:"论证一致性",value:item.scores.consistency},{label:"标准执行",value:item.scores.standard},{label:"研究深化",value:researchDepth}],independentThinking}})}
+    const selectedEntry=()=>state.history[state.selectedIndex]||null,previousEntry=()=>state.selectedIndex>0?state.history[state.selectedIndex-1]||null:null;
+    function getDeltaLabel(delta){if(delta>=5)return{text:"明显进步",cls:"up"};if(delta>=2)return{text:"稳步提升",cls:"up"};if(delta>-2)return{text:"保持稳定",cls:"flat"};return{text:"仍待补强",cls:"soft"}}
+    function getCapabilityText(value,delta){if(delta>=5)return"较上一轮更清晰";if(delta>=2)return"较上一轮更稳定";if(delta>-2)return"整体保持";if(value>=65)return"已有基础，仍需压实";return"建议继续补强"}
+    function renderLegend(){legendStack.innerHTML=state.history.map((entry,index)=>`<div class="legend-card ${index===state.selectedIndex?"selected":""}" data-growth-index="${index}"><div class="legend-top"><div class="legend-index">第 ${index+1} 次作业</div><div class="legend-date">${entry.date}</div></div><div class="legend-name">${entry.assignmentName}</div><div class="legend-tag">${safeText(entry.tag,"该次作业暂无额外标签")}</div></div>`).join("");legendStack.querySelectorAll(".legend-card").forEach(card=>card.addEventListener("click",()=>{state.selectedIndex=Number(card.dataset.growthIndex);renderAll()}))}
+    function renderSummary(){const targetStudent=student,selected=selectedEntry(),previous=previousEntry();studentMeta.innerHTML=`<div><strong>姓名</strong>${safeText(targetStudent.name)}</div><div><strong>学号</strong>${safeText(targetStudent.id)}</div><div><strong>专业</strong>${safeText(targetStudent.major)}</div><div><strong>班级</strong>${safeText(targetStudent.className)}</div><div><strong>联系方式</strong>${safeText(targetStudent.contact)}</div><div><strong>课程</strong>${safeText(course&&course.name,"未找到课程")}</div>`;if(!selected){latestSummary.textContent="当前没有可用于判断的作业节点。";deltaBadges.innerHTML="";return}latestSummary.textContent=!previous?`当前查看的是“${selected.assignmentName}”。这是该学生目前最早的成长节点，可视为后续能力变化的起点。`:`当前查看“${selected.assignmentName}”后的能力状态。与上一轮作业相比，学生在结构把握、表达清晰度与标准执行上的变化已经可见，可据此判断其阶段性进步方向。`;deltaBadges.innerHTML=selected.dimensions.map((item,index)=>{const delta=previous?item.value-previous.dimensions[index].value:item.value-50,tag=getDeltaLabel(delta);return`<span class="signal ${tag.cls}">${item.label}：${tag.text}</span>`}).concat([`<span class="signal ${selected.independentThinking>=70?"up":"flat"}">自主思考：${selected.independentThinking>=70?"逐步增强":"仍在建立"}</span>`]).join("")}
+    function renderTimeline(){if(!state.history.length){timelineBox.innerHTML='<div class="empty">当前暂无成长记录。</div>';return}timelineBox.innerHTML=state.history.map((entry,index)=>{const previous=index>0?state.history[index-1]:null,metrics=entry.dimensions.map((item,dimIndex)=>{const delta=previous?item.value-previous.dimensions[dimIndex].value:item.value-50;return`<div class="mini-metric"><div class="mini-metric-label">${item.label}</div><div class="mini-metric-main">${getCapabilityText(item.value,delta)}</div><div class="mini-metric-sub">${previous?"较上一轮的能力表现更可辨识":"首个能力节点"}</div></div>`}).join("");return`<div class="timeline-card ${index===state.selectedIndex?"selected":""}" data-timeline-index="${index}"><div class="timeline-head"><div><div class="hint-tag">第 ${index+1} 次作业</div><h3 style="margin-top:10px;">${entry.assignmentName}</h3><div class="timeline-meta">${entry.date} · ${safeText(entry.tag,"该次作业暂无额外标签")}</div></div></div><div class="timeline-grid">${metrics}</div></div>`}).join("");timelineBox.querySelectorAll("[data-timeline-index]").forEach(node=>node.addEventListener("click",()=>{state.selectedIndex=Number(node.dataset.timelineIndex);renderAll()}))}
+    function renderRadar(){if(!state.history.length){radarCanvas.innerHTML='<div class="empty">当前学生尚无成长节点，待完成首次作业批改后，这里会自动形成能力变化地图。</div>';return}window.GrowthViz.renderRadar(radarCanvas,{history:state.history,selectedIndex:state.selectedIndex,colors:dimensionColors,onSelect:index=>{state.selectedIndex=index;renderAll()}})}
+    function renderBars(){if(!state.history.length){stackLegend.innerHTML="";stackedCanvas.innerHTML='<div class="empty">当前暂无可对比的作业节点。</div>';return}const dims=state.history[0].dimensions.map(item=>item.label);stackLegend.innerHTML=dims.map((label,index)=>`<span class="stack-pill"><span class="swatch" style="background:${dimensionColors[index]};"></span>${label}</span>`).join("");window.GrowthViz.renderStacked(stackedCanvas,{history:state.history,selectedIndex:state.selectedIndex,colors:dimensionColors,showAxisNumbers:true,onSelect:index=>{state.selectedIndex=index;renderAll()}})}
+    function updateFlipState(){vizCard.classList.toggle("flipped",state.chartMode==="stacked")}
+    function renderAll(){renderLegend();renderSummary();renderTimeline();renderRadar();renderBars();updateFlipState()}
+    const toggleChartMode=event=>{if(event)event.stopPropagation();state.chartMode=state.chartMode==="radar"?"stacked":"radar";updateFlipState()};
+    flipBtn.addEventListener("click",toggleChartMode);flipBtnBack.addEventListener("click",toggleChartMode);vizCard.addEventListener("click",event=>{if(event.target.closest(".viz-toggle")||event.target.closest(".chart-interactive")) return;toggleChartMode(event)});
+    window.addEventListener("resize",()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(state.history.length)renderAll()},120)});
+    if(!student){pageTitle.textContent="未找到学生成长路径";pageDesc.textContent="请返回教师首页重新选择学生。";radarCanvas.innerHTML='<div class="empty">未找到该学生的成长记录。</div>';stackedCanvas.innerHTML='<div class="empty">未找到该学生的成长记录。</div>';stackLegend.innerHTML="";legendStack.innerHTML="";studentMeta.innerHTML='<div class="empty">请返回教师首页重新选择学生。</div>';latestSummary.textContent="当前没有可展示的成长判断。";deltaBadges.innerHTML="";timelineBox.innerHTML='<div class="empty">未找到该学生的成长节点。</div>'}else{pageTitle.textContent=`${student.name} · 学生成长路径`;state.history=buildGrowthHistory(student);state.selectedIndex=Math.max(state.history.length-1,0);renderAll()}
+  </script>
+</body>
+</html>
